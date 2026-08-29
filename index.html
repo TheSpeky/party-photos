@@ -204,8 +204,8 @@
         <input type="file" id="file-picker" accept="image/*,video/*" multiple onchange="updateFileLabel()">
       </div>
       <p class="limits-text">
-        Max 100MB per file • Max 10GB total<br>
-        Dosya başına maks 100MB • Toplam maks 10GB
+        Max 3GB per file • Max 10GB total<br>
+        Dosya başına maks 3GB • Toplam maks 10GB
       </p>
     </div>
 
@@ -247,7 +247,7 @@
         return;
       }
       
-      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+      const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3 GB
       const MAX_SESSION_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
       
       let totalSessionSize = 0;
