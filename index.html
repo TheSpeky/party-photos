@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Engagement Party - Media Upload</title>
+  <!-- Google Fonts for Modern Typography -->
+  <link rel="preconnect" href="https://googleapis.com">
+  <link rel="preconnect" href="https://gstatic.com" crossorigin>
+  <link href="https://googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #fcfbfa; /* Warm white / cream background */
+      --card-bg: #ffffff;
+      --text-main: #2c2a29; /* Soft dark charcoal */
+      --text-muted: #6e6a66;
+      --accent: #8fa89b; /* Subtle sage green accent */
+      --accent-hover: #7b9487;
+      --border-color: #e6e2de;
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 40px 30px;
+      box-shadow: 0 10px 30px rgba(44, 42, 41, 0.04);
+      text-align: center;
+    }
+
+    /* Typography styling */
+    .title-ring {
+      font-size: 2.2rem;
+      margin-bottom: 12px;
+      color: var(--text-main);
+    }
+    
+    .serif-text {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-weight: 500;
+    }
+
+    .message-section {
+      margin-bottom: 32px;
+    }
+
+    .message-en {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+
+    .message-tr {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    /* Custom Modern Upload Container */
+    .upload-zone {
+      border: 2px dashed var(--accent);
+      background-color: rgba(143, 168, 155, 0.04);
+      border-radius: 16px;
+      padding: 30px 20px;
+      margin-bottom: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-zone:hover {
+      background-color: rgba(143, 168, 155, 0.08);
+      border-color: var(--accent-hover);
+    }
+
+    .upload-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .limits-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    /* Native picker wrapper to style beautifully */
+    .file-input-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .file-input-wrapper input[type=file] {
+      font-size: 100px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .custom-file-label {
+      display: block;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    /* Modern Primary Action Button */
+    .btn-submit {
+      width: 100%;
+      background-color: var(--text-main);
+      color: #ffffff;
+      border: none;
+      padding: 16px;
+      font-family: var(--font-sans);
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-submit:hover {
+      background-color: #1a1918;
+    }
+
+    .btn-submit:active {
+      transform: scale(0.99);
+    }
+
+    /* Animated Status Messages */
+    .status-box {
+      margin-top: 24px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.5;
+      color: var(--text-main);
+      white-space: pre-line;
+    }
+    
+    .status-subtext {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      display: block;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header Section -->
+    <h1 class="title-ring"><span class="serif-text">Thank You</span> ✨</h1>
+    
+    <!-- Multilingual Thank You Message -->
+    <div class="message-section">
+      <p class="message-en">
+        Thank you for celebrating our engagement with us! Please share the photos and videos you captured during the party.
+      </p>
+      <p class="message-tr">
+        Nişanımızı bizimle kutladığınız için teşekkür ederiz! Lütfen parti boyunca çektiğiniz fotoğrafları ve videoları bizimle paylaşın.
+      </p>
+    </div>
+
+    <!-- Upload Interface -->
+    <div class="upload-zone" onclick="document.getElementById('file-picker').click()">
+      <span class="upload-icon">📸</span>
+      <div class="file-input-wrapper">
+        <span class="custom-file-label" id="file-label">Choose files / Dosyaları Seçin</span>
+        <input type="file" id="file-picker" accept="image/*,video/*" multiple onchange="updateFileLabel()">
+      </div>
+      <p class="limits-text">
+        Max 100MB per file • Max 10GB total<br>
+        Dosya başına maks 100MB • Toplam maks 10GB
+      </p>
+    </div>
+
+    <!-- Submit Button -->
+    <button class="btn-submit" onclick="uploadFiles()">
+      Upload Everything / Hepsini Yükle
+    </button>
+
+    <!-- Status Message -->
+    <div id="status" class="status-box">
+      Ready to upload
+      <span class="status-subtext">Yüklemeye hazır</span>
+    </div>
+  </div>
+
+  <script>
+    // Updates UI placeholder text when files are chosen
+    function updateFileLabel() {
+      const picker = document.getElementById('file-picker');
+      const label = document.getElementById('file-label');
+      if (picker.files.length > 0) {
+        label.innerText = `Selected ${picker.files.length} file(s) / ${picker.files.length} dosya seçildi`;
+        label.style.textDecoration = "none";
+      } else {
+        label.innerText = "Choose files / Dosyaları Seçin";
+        label.style.textDecoration = "underline";
+      }
+    }
+
+    async function uploadFiles() {
+      const picker = document.getElementById('file-picker');
+      const status = document.getElementById('status');
+      
+      // PASTE YOUR CLOUDFLARE WORKER URL HERE
+      const WORKER_URL = 'YOUR_CLOUDFLARE_WORKER_URL_HERE';
+      
+      if (picker.files.length === 0) {
+        alert('Please select at least one file. / Lütfen en az bir dosya seçin.');
+        return;
+      }
+      
+      const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+      const MAX_SESSION_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
+      
+      let totalSessionSize = 0;
+
+      // 1. Frontend Size Verifications
+      for (let file of picker.files) {
+        if (file.size > MAX_FILE_SIZE) {
+          alert(`The file "${file.name}" exceeds 100MB.\n"${file.name}" dosyası 100MB sınırını aşıyor.`);
+          status.innerHTML = 'Upload cancelled.<span class="status-subtext">Yükleme iptal edildi.</span>';
+          return;
+        }
+        totalSessionSize += file.size;
+      }
+
+      if (totalSessionSize > MAX_SESSION_SIZE) {
+        alert(`Total batch size is ${(totalSessionSize / (1024**3)).toFixed(2)} GB (Max 10GB).\nToplam boyut ${(totalSessionSize / (1024**3)).toFixed(2)} GB (Maks 10GB).`);
+        status.innerHTML = 'Upload cancelled.<span class="status-subtext">Yükleme iptal edildi.</span>';
+        return;
+      }
+      
+      status.innerHTML = 'Preparing files...<span class="status-subtext">Dosyalar hazırlanıyor...</span>';
+      let currentFileIndex = 1;
+      
+      // 2. Main Upload Request Sequence
+      for (let file of picker.files) {
+        status.innerHTML = `Uploading file ${currentFileIndex} of ${picker.files.length}...\n<span class="status-subtext">${picker.files.length} dosyadan ${currentFileIndex}. dosya yükleniyor...</span>`;
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+          const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            status.innerHTML = `Upload Error / Yükleme Hatası: ${errorText}`;
+            return; 
+          }
+          currentFileIndex++;
+        } catch (e) {
+          status.innerHTML = 'Connection lost. Please try again.<span class="status-subtext">Bağlantı kesildi. Lütfen tekrar deneyin.</span>';
+          return;
+        }
+      }
+      
+      // 3. Global Success Screen Update
+      status.innerHTML = '🎉 Success! All your files have been uploaded. Thank you!<span class="status-subtext" style="color: #6a8073; font-weight:600;">🎉 Başarılı! Tüm dosyalarınız yüklendi. Teşekkürler!</span>';
+      document.getElementById('file-label').innerText = "Choose files / Dosyaları Seçin";
+      document.getElementById('file-label').style.textDecoration = "underline";
+      picker.value = ""; 
+    }
+  </script>
+
+</body>
+</html>
