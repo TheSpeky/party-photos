@@ -195,13 +195,58 @@
       border-radius: 10px;
       transition: width 0.1s linear;
     }
+
+    /* FILE LIST & PREVIEW STYLING */
+    .file-list {
+      text-align: left;
+      margin: 15px 0;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 5px;
+      border-radius: 8px;
+    }
+    
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f1ede9;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+    }
+    
+    .file-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 80%;
+      color: var(--text-main, #2c2a29);
+    }
+    
+    .remove-btn {
+      background: none;
+      border: none;
+      color: #ff4d4d;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0 5px;
+      line-height: 1;
+    }
+    
+    .remove-btn:hover {
+      color: #cc0000;
+    }
+
   </style>
 </head>
 <body>
 
   <div class="container">
     <!-- Header Section -->
-    <h1 class="title-ring"><span class="serif-text">Thank You</span> ✨</h1>
+    <h1 class="title-ring"><span class="serif-text">Thank You - test</span> ✨</h1>
     
     <!-- Multilingual Thank You Message -->
     <div class="message-section">
@@ -224,7 +269,10 @@
         Max 3GB per file • Max 10GB total<br>
         Dosya başına maks 3GB • Toplam maks 10GB
       </p>
-    </div>
+    </div
+
+    <!-- Container for selected files list -->
+    <div id="file-list" class="file-list"></div>
 
     <!-- Submit Button -->
     <button class="btn-submit" id="submit-btn" onclick="uploadFiles()">
@@ -245,107 +293,161 @@
   </div>
 
   <script>
-    // Helper funktion til at håndtere individuel upload med genforbindelse og procentmåler
-function uploadSingleFileWithRetry(file, url, current, total, maxRetries = 3) {
-  return new Promise((resolve, reject) => {
-    let attempt = 0;
-
-    function startXHR() {
-      attempt++;
-      const xhr = new XMLHttpRequest();
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Opdater procentmåler i realtid
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          const status = document.getElementById('status');
-          const progressBar = document.getElementById('progress-bar');
-          
-          progressBar.style.width = percentComplete + '%';
-          status.innerHTML = `Uploading file ${current} of ${total}:<br>"${file.name}" (${percentComplete}%)<br><span class="status-subtext">${total} dosyadan ${current}. dosya yükleniyor (${percentComplete}%)</span>`;
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) resolve();
-        else handleFailure(new Error(`Server fejl: ${xhr.status}`));
-      });
-
-      xhr.addEventListener('error', () => handleFailure(new Error("Forbindelse tabt.")));
-
-      function handleFailure(error) {
-        if (attempt < maxRetries) {
-          const status = document.getElementById('status');
-          status.innerHTML = `Connection lost. Retrying attempt ${attempt}/${maxRetries}...<br><span class="status-subtext">Bağlantı kesildi. Yeniden deneniyor ${attempt}/${maxRetries}...</span>`;
-          setTimeout(startXHR, 2000); // Vent 2 sekunder før nyt forsøg
-        } else {
-          reject(error);
-        }
+  // Global array to track files manually so users can remove items
+  let selectedFiles = [];
+  
+  function updateFileLabel() {
+    const picker = document.getElementById('file-picker');
+    const label = document.getElementById('file-label');
+    const listContainer = document.getElementById('file-list');
+    
+    // Append newly picked files to our global array
+    if (picker.files.length > 0) {
+      for (let i = 0; i < picker.files.length; i++) {
+        selectedFiles.push(picker.files[i]);
       }
-
-      xhr.open('POST', url, true);
-      xhr.send(formData);
     }
-    startXHR();
-  });
-}
-
-async function uploadFiles() {
-  const picker = document.getElementById('file-picker');
-  const status = document.getElementById('status');
-  const progressContainer = document.getElementById('progress-container');
-  const progressBar = document.getElementById('progress-bar');
-  
-  // HUSK AT INDSÆTTE DIN WORKER URL HER
-  const WORKER_URL = 'https://gentle-dust-03f3.pingvincrafter.workers.dev/';
-  
-  if (picker.files.length === 0) {
-    alert('Please select at least one file. / Lütfen en az bir dosya seçin.');
-    return;
+    
+    renderFileList();
+    picker.value = ""; // Reset picker so user can add the same file again if they want
   }
   
-  const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3 GB
-  const MAX_SESSION_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
-  let totalSessionSize = 0;
-
-  for (let file of picker.files) {
-    if (file.size > MAX_FILE_SIZE) {
-      alert(`The file "${file.name}" exceeds 100MB.\n"${file.name}" dosyası 100MB sınırını aşıyor.`);
+  function renderFileList() {
+    const label = document.getElementById('file-label');
+    const listContainer = document.getElementById('file-list');
+    
+    listContainer.innerHTML = ""; // Clear current view
+    
+    if (selectedFiles.length > 0) {
+      label.innerText = `Selected ${selectedFiles.length} file(s) / ${selectedFiles.length} dosya seçildi`;
+      label.style.textDecoration = "none";
+      
+      // Build the visual list with a remove button for each file
+      selectedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `
+          <span class="file-name">${file.name}</span>
+          <button class="remove-btn" onclick="removeFile(${index})">&times;</button>
+        `;
+        listContainer.appendChild(item);
+      });
+    } else {
+      label.innerText = "Choose files / Dosyaları Seçin";
+      label.style.textDecoration = "underline";
+    }
+  }
+  
+  function removeFile(index) {
+    selectedFiles.splice(index, 1); // Remove from our array
+    renderFileList(); // Refresh the UI list
+  }
+  
+  function uploadSingleFileWithRetry(file, url, current, total, maxRetries = 3) {
+    return new Promise((resolve, reject) => {
+      let attempt = 0;
+  
+      function startXHR() {
+        attempt++;
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('file', file);
+  
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            const status = document.getElementById('status');
+            const progressBar = document.getElementById('progress-bar');
+            
+            progressBar.style.width = percentComplete + '%';
+            status.innerHTML = `Uploading file ${current} of ${total}:<br>"${file.name}" (${percentComplete}%)<br><span class="status-subtext">${total} dosyadan ${current}. dosya yükleniyor (${percentComplete}%)</span>`;
+          }
+        });
+  
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else handleFailure(new Error(`Server error: ${xhr.status}`));
+        });
+  
+        xhr.addEventListener('error', () => handleFailure(new Error("Connection lost.")));
+  
+        function handleFailure(error) {
+          if (attempt < maxRetries) {
+            const status = document.getElementById('status');
+            status.innerHTML = `Connection lost. Retrying attempt ${attempt}/${maxRetries}...<br><span class="status-subtext">Bağlantı kesildi. Yeniden deneniyor ${attempt}/${maxRetries}...</span>`;
+            setTimeout(startXHR, 2000);
+          } else {
+            reject(error);
+          }
+        }
+  
+        xhr.open('POST', url, true);
+        xhr.send(formData);
+      }
+      startXHR();
+    });
+  }
+  
+  async function uploadFiles() {
+    const status = document.getElementById('status');
+    const progressContainer = document.getElementById('progress-container');
+    const progressBar = document.getElementById('progress-bar');
+    const submitBtn = document.querySelector('.btn-submit');
+    
+    // IMPORTANT: Paste your actual Cloudflare Worker URL here
+    const WORKER_URL = 'https://gentle-dust-03f3.pingvincrafter.workers.dev/';
+    
+    if (selectedFiles.length === 0) {
+      alert('Please select at least one file. / Lütfen en az bir dosya seçin.');
       return;
     }
-    totalSessionSize += file.size;
-  }
-
-  if (totalSessionSize > MAX_SESSION_SIZE) {
-    alert(`Total batch size exceeds 10GB.\nToplam boyut 10GB sınırını aşıyor.`);
-    return;
-  }
+    
+    const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3 GB
+    const MAX_SESSION_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
+    let totalSessionSize = 0;
   
-  // Vis bjælken og nulstil status
-  progressContainer.style.display = 'block';
-  progressBar.style.width = '0%';
-  status.innerHTML = 'Preparing files...<span class="status-subtext">Dosyalar hazırlanıyor...</span>';
+    for (let file of selectedFiles) {
+      if (file.size > MAX_FILE_SIZE) {
+        alert(`The file "${file.name}" exceeds 100MB.\n"${file.name}" dosyası 100MB sınırını aşıyor.`);
+        return;
+      }
+      totalSessionSize += file.size;
+    }
   
-  let currentFileIndex = 1;
-  
-  for (let file of picker.files) {
-    try {
-      progressBar.style.width = '0%'; // Nulstil bjælken til næste fil
-      await uploadSingleFileWithRetry(file, WORKER_URL, currentFileIndex, picker.files.length);
-      currentFileIndex++;
-    } catch (e) {
-      status.innerHTML = 'Upload failed due to persistent network drops.<span class="status-subtext">Bağlantı kopukluğu nedeniyle yükleme başarısız oldu.</span>';
+    if (totalSessionSize > MAX_SESSION_SIZE) {
+      alert(`Total batch size exceeds 10GB.\nToplam boyut 10GB sınırını aşıyor.`);
       return;
     }
+    
+    // Lock UI buttons during active transfer
+    if(submitBtn) submitBtn.disabled = true;
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    status.innerHTML = 'Preparing files...<span class="status-subtext">Dosyalar hazırlanıyor...</span>';
+    
+    let currentFileIndex = 1;
+    const totalFilesCount = selectedFiles.length;
+    
+    for (let file of selectedFiles) {
+      try {
+        progressBar.style.width = '0%'; 
+        await uploadSingleFileWithRetry(file, WORKER_URL, currentFileIndex, totalFilesCount);
+        currentFileIndex++;
+      } catch (e) {
+        status.innerHTML = 'Upload failed due to persistent network drops.<span class="status-subtext">Bağlantı kopukluğu nedeniyle yükleme başarısız oldu.</span>';
+        if(submitBtn) submitBtn.disabled = false;
+        return;
+      }
+    }
+    
+    // Success state handling
+    status.innerHTML = '🎉 Success! All your files have been uploaded. Thank you!<span class="status-subtext" style="color: #6a8073; font-weight:600;">🎉 Başarılı! Tüm dosyalarınız yüklendi. Teşekkürler!</span>';
+    progressContainer.style.display = 'none';
+    document.getElementById('file-list').innerHTML = "";
+    selectedFiles = []; // Clear current virtual queue
+    renderFileList();
+    if(submitBtn) submitBtn.disabled = false;
   }
-  
-  // Succes-besked
-  status.innerHTML = '🎉 Success! All your files have been uploaded. Thank you!<span class="status-subtext" style="color: #6a8073; font-weight:600;">🎉 Başarılı! Tüm dosyalarınız yüklendi. Teşekkürler!</span>';
-  progressContainer.style.display = 'none';
-  picker.value = ""; 
-}
 
   </script>
 
