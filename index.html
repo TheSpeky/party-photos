@@ -394,7 +394,7 @@
     const progressBar = document.getElementById('progress-bar');
     const submitBtn = document.querySelector('.btn-submit');
     
-    // IMPORTANT: Paste your actual Cloudflare Worker URL here
+    // VIGTIGT: Indsæt din rigtige Cloudflare Worker URL her
     const WORKER_URL = 'https://gentle-dust-03f3.pingvincrafter.workers.dev/';
     
     if (selectedFiles.length === 0) {
@@ -402,10 +402,11 @@
       return;
     }
     
-    const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3 GB
+    const MAX_FILE_SIZE = 3 * 1024* 1024 * 1024; // 3 GB
     const MAX_SESSION_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
     let totalSessionSize = 0;
   
+    // Hurtig tjek af størrelser (Dette tager kun få millisekunder)
     for (let file of selectedFiles) {
       if (file.size > MAX_FILE_SIZE) {
         alert(`The file "${file.name}" exceeds 100MB.\n"${file.name}" dosyası 100MB sınırını aşıyor.`);
@@ -419,11 +420,15 @@
       return;
     }
     
-    // Lock UI buttons during active transfer
-    if(submitBtn) submitBtn.disabled = true;
+    // Lås knappen med det samme, så gæsten ved, der trykkes
+    if(submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.5';
+    }
+    
+    // Vis status og fremskridtsbjælke ØJEBLIKKELIGT
     progressContainer.style.display = 'block';
     progressBar.style.width = '0%';
-    status.innerHTML = 'Preparing files...<span class="status-subtext">Dosyalar hazırlanıyor...</span>';
     
     let currentFileIndex = 1;
     const totalFilesCount = selectedFiles.length;
@@ -431,23 +436,36 @@
     for (let file of selectedFiles) {
       try {
         progressBar.style.width = '0%'; 
+        
+        // Vi ændrer statusteksten HER, FØR browseren begynder at pakke filen
+        status.innerHTML = `Connecting & Uploading file ${currentFileIndex} of ${totalFilesCount}...\n"${file.name}" (0%)<br><span class="status-subtext">${totalFilesCount} dosyadan ${currentFileIndex}. dosya yükleniyor (0%)</span>`;
+        
+        // Start uploaden med det samme – FormData pakkes nu live inde i funktionen
         await uploadSingleFileWithRetry(file, WORKER_URL, currentFileIndex, totalFilesCount);
         currentFileIndex++;
       } catch (e) {
         status.innerHTML = 'Upload failed due to persistent network drops.<span class="status-subtext">Bağlantı kopukluğu nedeniyle yükleme başarısız oldu.</span>';
-        if(submitBtn) submitBtn.disabled = false;
+        if(submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+        }
         return;
       }
     }
     
-    // Success state handling
+    // Succes-håndtering
     status.innerHTML = '🎉 Success! All your files have been uploaded. Thank you!<span class="status-subtext" style="color: #6a8073; font-weight:600;">🎉 Başarılı! Tüm dosyalarınız yüklendi. Teşekkürler!</span>';
     progressContainer.style.display = 'none';
     document.getElementById('file-list').innerHTML = "";
-    selectedFiles = []; // Clear current virtual queue
+    selectedFiles = []; // Tøm køen
     renderFileList();
-    if(submitBtn) submitBtn.disabled = false;
+    
+    if(submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '1';
+    }
   }
+
 
   </script>
 
