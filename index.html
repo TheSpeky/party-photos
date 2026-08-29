@@ -178,6 +178,23 @@
       display: block;
       margin-top: 4px;
     }
+
+    .progress-container {
+      width: 100%;
+      background-color: #f0ede9;
+      border-radius: 10px;
+      margin-top: 15px;
+      display: none;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      width: 0%;
+      height: 12px;
+      background-color: var(--accent, #8fa89b);
+      border-radius: 10px;
+      transition: width 0.1s linear;
+    }
   </style>
 </head>
 <body>
@@ -210,9 +227,15 @@
     </div>
 
     <!-- Submit Button -->
-    <button class="btn-submit" onclick="uploadFiles()">
+    <button class="btn-submit" id="submit-btn" onclick="uploadFiles()">
       Upload Everything / Hepsini Yükle
     </button>
+
+        <!-- Progress Bar UI -->
+    <div class="progress-container" id="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
 
     <!-- Status Message -->
     <div id="status" class="status-box">
@@ -222,86 +245,108 @@
   </div>
 
   <script>
-    // Updates UI placeholder text when files are chosen
-    function updateFileLabel() {
-      const picker = document.getElementById('file-picker');
-      const label = document.getElementById('file-label');
-      if (picker.files.length > 0) {
-        label.innerText = `Selected ${picker.files.length} file(s) / ${picker.files.length} dosya seçildi`;
-        label.style.textDecoration = "none";
-      } else {
-        label.innerText = "Choose files / Dosyaları Seçin";
-        label.style.textDecoration = "underline";
-      }
-    }
+    // Helper funktion til at håndtere individuel upload med genforbindelse og procentmåler
+function uploadSingleFileWithRetry(file, url, current, total, maxRetries = 3) {
+  return new Promise((resolve, reject) => {
+    let attempt = 0;
 
-    async function uploadFiles() {
-      const picker = document.getElementById('file-picker');
-      const status = document.getElementById('status');
-      
-      // PASTE YOUR CLOUDFLARE WORKER URL HERE
-      const WORKER_URL = 'https://gentle-dust-03f3.pingvincrafter.workers.dev/';
-      
-      if (picker.files.length === 0) {
-        alert('Please select at least one file. / Lütfen en az bir dosya seçin.');
-        return;
-      }
-      
-      const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3 GB
-      const MAX_SESSION_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
-      
-      let totalSessionSize = 0;
+    function startXHR() {
+      attempt++;
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', file);
 
-      // 1. Frontend Size Verifications
-      for (let file of picker.files) {
-        if (file.size > MAX_FILE_SIZE) {
-          alert(`The file "${file.name}" exceeds 100MB.\n"${file.name}" dosyası 100MB sınırını aşıyor.`);
-          status.innerHTML = 'Upload cancelled.<span class="status-subtext">Yükleme iptal edildi.</span>';
-          return;
-        }
-        totalSessionSize += file.size;
-      }
-
-      if (totalSessionSize > MAX_SESSION_SIZE) {
-        alert(`Total batch size is ${(totalSessionSize / (1024**3)).toFixed(2)} GB (Max 10GB).\nToplam boyut ${(totalSessionSize / (1024**3)).toFixed(2)} GB (Maks 10GB).`);
-        status.innerHTML = 'Upload cancelled.<span class="status-subtext">Yükleme iptal edildi.</span>';
-        return;
-      }
-      
-      status.innerHTML = 'Preparing files...<span class="status-subtext">Dosyalar hazırlanıyor...</span>';
-      let currentFileIndex = 1;
-      
-      // 2. Main Upload Request Sequence
-      for (let file of picker.files) {
-        status.innerHTML = `Uploading file ${currentFileIndex} of ${picker.files.length}...\n<span class="status-subtext">${picker.files.length} dosyadan ${currentFileIndex}. dosya yükleniyor...</span>`;
-        
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-          const response = await fetch(WORKER_URL, {
-            method: 'POST',
-            body: formData
-          });
+      // Opdater procentmåler i realtid
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percentComplete = Math.round((e.loaded / e.total) * 100);
+          const status = document.getElementById('status');
+          const progressBar = document.getElementById('progress-bar');
           
-          if (!response.ok) {
-            const errorText = await response.text();
-            status.innerHTML = `Upload Error / Yükleme Hatası: ${errorText}`;
-            return; 
-          }
-          currentFileIndex++;
-        } catch (e) {
-          status.innerHTML = 'Connection lost. Please try again.<span class="status-subtext">Bağlantı kesildi. Lütfen tekrar deneyin.</span>';
-          return;
+          progressBar.style.width = percentComplete + '%';
+          status.innerHTML = `Uploading file ${current} of ${total}:<br>"${file.name}" (${percentComplete}%)<br><span class="status-subtext">${total} dosyadan ${current}. dosya yükleniyor (${percentComplete}%)</span>`;
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else handleFailure(new Error(`Server fejl: ${xhr.status}`));
+      });
+
+      xhr.addEventListener('error', () => handleFailure(new Error("Forbindelse tabt.")));
+
+      function handleFailure(error) {
+        if (attempt < maxRetries) {
+          const status = document.getElementById('status');
+          status.innerHTML = `Connection lost. Retrying attempt ${attempt}/${maxRetries}...<br><span class="status-subtext">Bağlantı kesildi. Yeniden deneniyor ${attempt}/${maxRetries}...</span>`;
+          setTimeout(startXHR, 2000); // Vent 2 sekunder før nyt forsøg
+        } else {
+          reject(error);
         }
       }
-      
-      // 3. Global Success Screen Update
-      status.innerHTML = '🎉 Success! All your files have been uploaded. Thank you!<span class="status-subtext" style="color: #6a8073; font-weight:600;">🎉 Başarılı! Tüm dosyalarınız yüklendi. Teşekkürler!</span>';
-      document.getElementById('file-label').innerText = "Choose files / Dosyaları Seçin";
-      document.getElementById('file-label').style.textDecoration = "underline";
-      picker.value = ""; 
+
+      xhr.open('POST', url, true);
+      xhr.send(formData);
     }
+    startXHR();
+  });
+}
+
+async function uploadFiles() {
+  const picker = document.getElementById('file-picker');
+  const status = document.getElementById('status');
+  const progressContainer = document.getElementById('progress-container');
+  const progressBar = document.getElementById('progress-bar');
+  
+  // HUSK AT INDSÆTTE DIN WORKER URL HER
+  const WORKER_URL = 'https://gentle-dust-03f3.pingvincrafter.workers.dev/';
+  
+  if (picker.files.length === 0) {
+    alert('Please select at least one file. / Lütfen en az bir dosya seçin.');
+    return;
+  }
+  
+  const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024; // 3 GB
+  const MAX_SESSION_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
+  let totalSessionSize = 0;
+
+  for (let file of picker.files) {
+    if (file.size > MAX_FILE_SIZE) {
+      alert(`The file "${file.name}" exceeds 100MB.\n"${file.name}" dosyası 100MB sınırını aşıyor.`);
+      return;
+    }
+    totalSessionSize += file.size;
+  }
+
+  if (totalSessionSize > MAX_SESSION_SIZE) {
+    alert(`Total batch size exceeds 10GB.\nToplam boyut 10GB sınırını aşıyor.`);
+    return;
+  }
+  
+  // Vis bjælken og nulstil status
+  progressContainer.style.display = 'block';
+  progressBar.style.width = '0%';
+  status.innerHTML = 'Preparing files...<span class="status-subtext">Dosyalar hazırlanıyor...</span>';
+  
+  let currentFileIndex = 1;
+  
+  for (let file of picker.files) {
+    try {
+      progressBar.style.width = '0%'; // Nulstil bjælken til næste fil
+      await uploadSingleFileWithRetry(file, WORKER_URL, currentFileIndex, picker.files.length);
+      currentFileIndex++;
+    } catch (e) {
+      status.innerHTML = 'Upload failed due to persistent network drops.<span class="status-subtext">Bağlantı kopukluğu nedeniyle yükleme başarısız oldu.</span>';
+      return;
+    }
+  }
+  
+  // Succes-besked
+  status.innerHTML = '🎉 Success! All your files have been uploaded. Thank you!<span class="status-subtext" style="color: #6a8073; font-weight:600;">🎉 Başarılı! Tüm dosyalarınız yüklendi. Teşekkürler!</span>';
+  progressContainer.style.display = 'none';
+  picker.value = ""; 
+}
+
   </script>
 
 </body>
